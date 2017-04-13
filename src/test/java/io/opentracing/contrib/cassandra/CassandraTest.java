@@ -19,8 +19,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
+import static com.jayway.awaitility.Awaitility.await;
+import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -81,6 +85,8 @@ public class CassandraTest {
 
         session.executeAsync("SELECT * FROM system.schema_keyspaces;").get();
         session.execute("SELECT * FROM system.schema_keyspaces;");
+
+        await().atMost(15, TimeUnit.SECONDS).until(reportedSpansSize(), equalTo(2));
 
         List<MockSpan> finished = mockTracer.finishedSpans();
         assertEquals(2, finished.size());
@@ -166,5 +172,14 @@ public class CassandraTest {
         Cluster.Builder builder = Cluster.builder().addContactPoints("127.0.0.1").withPort(9142);
         Cluster cluster = new TracingCluster(builder);
         return cluster.connectAsync("system");
+    }
+
+    private Callable<Integer> reportedSpansSize() {
+        return new Callable<Integer>() {
+            @Override
+            public Integer call() throws Exception {
+                return mockTracer.finishedSpans().size();
+            }
+        };
     }
 }

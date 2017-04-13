@@ -78,6 +78,12 @@
             <artifactId>cassandra-unit</artifactId>
             <version>2.1.9.2</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-all</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

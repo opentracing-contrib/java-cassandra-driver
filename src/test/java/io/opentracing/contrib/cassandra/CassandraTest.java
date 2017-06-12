@@ -34,6 +34,7 @@ public class CassandraTest {
 
   @Before
   public void before() throws Exception {
+    System.setProperty("java.library.path", "src/test/resources/libs");
     mockTracer.reset();
     EmbeddedCassandraServerHelper.startEmbeddedCassandra();
   }
@@ -47,7 +48,7 @@ public class CassandraTest {
   public void withoutParent() throws Exception {
     Session session = createSession();
 
-    ResultSetFuture future = session.executeAsync("SELECT * FROM system.schema_keyspaces;");
+    ResultSetFuture future = session.executeAsync("SELECT * FROM system_schema.keyspaces;");
 
     ResultSet resultSet = future.get();
     assertNotNull(resultSet.one());
@@ -58,7 +59,7 @@ public class CassandraTest {
     session.execute(bound);
 
     session.execute("USE test;");
-    session.execute("SELECT * FROM system.schema_keyspaces;");
+    session.execute("SELECT * FROM system_schema.keyspaces;");
 
     List<MockSpan> finished = mockTracer.finishedSpans();
     assertEquals(4, finished.size());
@@ -78,8 +79,8 @@ public class CassandraTest {
     MockSpan parent = mockTracer.buildSpan("parent").start();
     mockTracer.makeActive(parent);
 
-    session.executeAsync("SELECT * FROM system.schema_keyspaces;").get();
-    session.execute("SELECT * FROM system.schema_keyspaces;");
+    session.executeAsync("SELECT * FROM system_schema.keyspaces;").get();
+    session.execute("SELECT * FROM system_schema.keyspaces;");
 
     await().atMost(15, TimeUnit.SECONDS).until(reportedSpansSize(), equalTo(2));
 
@@ -98,7 +99,7 @@ public class CassandraTest {
   public void usingNewSession() {
     Session session = createNewSession();
 
-    session.execute("SELECT * FROM system.schema_keyspaces;");
+    session.execute("SELECT * FROM system_schema.keyspaces;");
 
     List<MockSpan> finished = mockTracer.finishedSpans();
     assertEquals(1, finished.size());
@@ -112,7 +113,7 @@ public class CassandraTest {
     ListenableFuture<Session> futureSession = createAsincSession();
     Session session = futureSession.get();
 
-    session.execute("SELECT * FROM system.schema_keyspaces;");
+    session.execute("SELECT * FROM system_schema.keyspaces;");
 
     List<MockSpan> finished = mockTracer.finishedSpans();
     assertEquals(1, finished.size());
@@ -126,7 +127,7 @@ public class CassandraTest {
     ListenableFuture<Session> futureSession = createAsincSessionWithKey();
     Session session = futureSession.get();
 
-    session.execute("SELECT * FROM system.schema_keyspaces;");
+    session.execute("SELECT * FROM system_schema.keyspaces;");
 
     List<MockSpan> finished = mockTracer.finishedSpans();
     assertEquals(1, finished.size());

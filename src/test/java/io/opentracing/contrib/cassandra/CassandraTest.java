@@ -27,10 +27,11 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
 import com.google.common.util.concurrent.ListenableFuture;
+import io.opentracing.Scope;
 import io.opentracing.mock.MockSpan;
 import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
-import io.opentracing.util.ThreadLocalActiveSpanSource;
+import io.opentracing.util.ThreadLocalScopeManager;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -42,7 +43,7 @@ import org.junit.Test;
 
 public class CassandraTest {
 
-  private static final MockTracer mockTracer = new MockTracer(new ThreadLocalActiveSpanSource(),
+  private static final MockTracer mockTracer = new MockTracer(new ThreadLocalScopeManager(),
       MockTracer.Propagator.TEXT_MAP);
 
   @Before
@@ -89,8 +90,7 @@ public class CassandraTest {
   public void withParent() throws Exception {
     Session session = createSession();
 
-    MockSpan parent = mockTracer.buildSpan("parent").start();
-    mockTracer.makeActive(parent);
+    Scope parent = mockTracer.buildSpan("parent").startActive(true);
 
     session.executeAsync("SELECT * FROM system_schema.keyspaces;").get();
     session.execute("SELECT * FROM system_schema.keyspaces;");
@@ -100,8 +100,8 @@ public class CassandraTest {
     List<MockSpan> finished = mockTracer.finishedSpans();
     assertEquals(2, finished.size());
     for (MockSpan mockSpan : finished) {
-      assertEquals(parent.context().spanId(), mockSpan.parentId());
-      assertEquals(parent.context().traceId(), mockSpan.context().traceId());
+      assertEquals(((MockSpan) parent.span()).context().spanId(), mockSpan.parentId());
+      assertEquals(((MockSpan) parent.span()).context().traceId(), mockSpan.context().traceId());
     }
 
     checkSpans(finished);

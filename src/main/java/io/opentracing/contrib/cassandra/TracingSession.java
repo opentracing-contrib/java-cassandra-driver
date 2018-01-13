@@ -292,7 +292,7 @@ class TracingSession implements Session {
     Tracer.SpanBuilder spanBuilder = tracer.buildSpan("execute")
         .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
 
-    Span span = spanBuilder.startManual();
+    Span span = spanBuilder.start();
 
     Tags.COMPONENT.set(span, COMPONENT_NAME);
     Tags.DB_STATEMENT.set(span, query);

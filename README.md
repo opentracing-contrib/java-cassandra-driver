@@ -10,7 +10,7 @@ pom.xml
 <dependency>
     <groupId>io.opentracing.contrib</groupId>
     <artifactId>opentracing-cassandra-driver</artifactId>
-    <version>0.0.3</version>
+    <version>VERSION</version>
 </dependency>
 ```
 

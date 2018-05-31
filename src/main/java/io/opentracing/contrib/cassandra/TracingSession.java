@@ -91,13 +91,16 @@ class TracingSession implements Session {
   @Override
   public ResultSet execute(String query) {
     Span span = buildSpan(query);
-    ResultSet resultSet = null;
+    ResultSet resultSet;
     try {
       resultSet = session.execute(query);
-      return resultSet;
-    } finally {
       finishSpan(span, resultSet);
+      return resultSet;
+    } catch (Exception e) {
+      finishSpan(span, e);
+      throw e;
     }
+
   }
 
   /**
@@ -106,12 +109,14 @@ class TracingSession implements Session {
   @Override
   public ResultSet execute(String query, Object... values) {
     Span span = buildSpan(query);
-    ResultSet resultSet = null;
+    ResultSet resultSet;
     try {
       resultSet = session.execute(query, values);
-      return resultSet;
-    } finally {
       finishSpan(span, resultSet);
+      return resultSet;
+    } catch (Exception e) {
+      finishSpan(span, e);
+      throw e;
     }
   }
 
@@ -121,12 +126,14 @@ class TracingSession implements Session {
   @Override
   public ResultSet execute(String query, Map<String, Object> values) {
     Span span = buildSpan(query);
-    ResultSet resultSet = null;
+    ResultSet resultSet;
     try {
       resultSet = session.execute(query, values);
-      return resultSet;
-    } finally {
       finishSpan(span, resultSet);
+      return resultSet;
+    } catch (Exception e) {
+      finishSpan(span, e);
+      throw e;
     }
   }
 
@@ -140,9 +147,11 @@ class TracingSession implements Session {
     ResultSet resultSet = null;
     try {
       resultSet = session.execute(statement);
-      return resultSet;
-    } finally {
       finishSpan(span, resultSet);
+      return resultSet;
+    } catch (Exception e) {
+      finishSpan(span, e);
+      throw e;
     }
   }
 

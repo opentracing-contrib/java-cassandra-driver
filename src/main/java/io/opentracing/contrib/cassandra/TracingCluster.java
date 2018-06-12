@@ -46,7 +46,9 @@ public class TracingCluster extends Cluster {
    * {@inheritDoc}
    */
   @Override
-  public Session newSession() {return new TracingSession(super.newSession(), tracer, querySpanNameProvider);}
+  public Session newSession() {
+    return new TracingSession(super.newSession(), tracer, querySpanNameProvider);
+  }
 
   /**
    * {@inheritDoc}

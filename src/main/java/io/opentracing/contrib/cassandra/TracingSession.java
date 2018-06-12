@@ -28,6 +28,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
+import io.opentracing.contrib.cassandra.QuerySpanNameProvider.CustomStringSpanName;
+import io.opentracing.contrib.cassandra.QuerySpanNameProvider.QuerySpanNameProvider;
 import io.opentracing.tag.Tags;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -50,10 +52,18 @@ class TracingSession implements Session {
   private final ExecutorService executorService = Executors.newCachedThreadPool();
   private final Session session;
   private final Tracer tracer;
+  private final QuerySpanNameProvider querySpanNameProvider;
 
   TracingSession(Session session, Tracer tracer) {
     this.session = session;
     this.tracer = tracer;
+    this.querySpanNameProvider = CustomStringSpanName.newBuilder().build("execute");
+  }
+
+  TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider) {
+    this.session = session;
+    this.tracer = tracer;
+    this.querySpanNameProvider = querySpanNameProvider;
   }
 
   /**
@@ -298,7 +308,8 @@ class TracingSession implements Session {
   }
 
   private Span buildSpan(String query) {
-    Tracer.SpanBuilder spanBuilder = tracer.buildSpan("execute")
+    String querySpanName = querySpanNameProvider.querySpanName(query);
+    Tracer.SpanBuilder spanBuilder = tracer.buildSpan(querySpanName)
         .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
 
     Span span = spanBuilder.start();

@@ -20,7 +20,7 @@ package io.opentracing.contrib.cassandra.QuerySpanNameProvider;
 public class PrefixedFullQuerySpanName implements QuerySpanNameProvider {
   private String prefix;
 
-  static class Builder implements QuerySpanNameProvider.Builder {
+  public static class Builder implements QuerySpanNameProvider.Builder {
     @Override
     public QuerySpanNameProvider build() { return new io.opentracing.contrib.cassandra.QuerySpanNameProvider.PrefixedFullQuerySpanName("Cassandra");}
 

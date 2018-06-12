@@ -21,7 +21,7 @@ public class CustomStringSpanName implements QuerySpanNameProvider {
 
   private String customString;
 
-  static class Builder implements QuerySpanNameProvider.Builder {
+  public static class Builder implements QuerySpanNameProvider.Builder {
     // Defaults to "execute"
     @Override
     public QuerySpanNameProvider build() { return new io.opentracing.contrib.cassandra.QuerySpanNameProvider.CustomStringSpanName("execute");}

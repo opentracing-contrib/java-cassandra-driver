@@ -19,7 +19,7 @@ package io.opentracing.contrib.cassandra.QuerySpanNameProvider;
  */
 public class FullQuerySpanName implements QuerySpanNameProvider {
 
-  static class Builder implements QuerySpanNameProvider.Builder {
+  public static class Builder implements QuerySpanNameProvider.Builder {
     @Override
     public QuerySpanNameProvider build() { return new io.opentracing.contrib.cassandra.QuerySpanNameProvider.FullQuerySpanName();}
 

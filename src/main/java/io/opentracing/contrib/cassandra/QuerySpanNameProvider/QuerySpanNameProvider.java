@@ -17,7 +17,7 @@ package io.opentracing.contrib.cassandra.QuerySpanNameProvider;
  * @author Jordan J Lopez
  */
 public interface QuerySpanNameProvider {
-  interface Builder {
+  public interface Builder {
     QuerySpanNameProvider build();
   }
 

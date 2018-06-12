@@ -23,6 +23,15 @@ import java.util.regex.Pattern;
  */
 public class QueryMethodTableSpanName implements QuerySpanNameProvider {
 
+  public static class Builder implements QuerySpanNameProvider.Builder {
+    @Override
+    public QuerySpanNameProvider build() { return new io.opentracing.contrib.cassandra.QuerySpanNameProvider.QueryMethodTableSpanName();}
+
+  }
+
+  QueryMethodTableSpanName() {
+  }
+
   // Pulled from http://cassandra.apache.org/doc/latest/cql/
   enum ManipulationMethod
   {
@@ -61,15 +70,6 @@ public class QueryMethodTableSpanName implements QuerySpanNameProvider {
       "ALTER MATERIALIZED VIEW",
       "DROP MATERIALIZED VIEW"
   };
-
-  static class Builder implements QuerySpanNameProvider.Builder {
-    @Override
-    public QuerySpanNameProvider build() { return new io.opentracing.contrib.cassandra.QuerySpanNameProvider.QueryMethodTableSpanName();}
-
-  }
-
-  QueryMethodTableSpanName() {
-  }
 
   @Override
   public String querySpanName(String query) {

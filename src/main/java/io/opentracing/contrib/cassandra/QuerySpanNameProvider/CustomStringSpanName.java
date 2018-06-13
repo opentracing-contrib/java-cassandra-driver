@@ -24,10 +24,10 @@ public class CustomStringSpanName implements QuerySpanNameProvider {
   public static class Builder implements QuerySpanNameProvider.Builder {
     // Defaults to "execute"
     @Override
-    public QuerySpanNameProvider build() { return new io.opentracing.contrib.cassandra.QuerySpanNameProvider.CustomStringSpanName("execute");}
+    public QuerySpanNameProvider build() { return new CustomStringSpanName("execute");}
 
     // Provide customString
-    public QuerySpanNameProvider build(String customString) { return new io.opentracing.contrib.cassandra.QuerySpanNameProvider.CustomStringSpanName(customString);}
+    public QuerySpanNameProvider build(String customString) { return new CustomStringSpanName(customString);}
   }
 
   CustomStringSpanName(String customString) {

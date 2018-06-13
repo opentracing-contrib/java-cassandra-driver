@@ -21,7 +21,7 @@ public class FullQuerySpanName implements QuerySpanNameProvider {
 
   public static class Builder implements QuerySpanNameProvider.Builder {
     @Override
-    public QuerySpanNameProvider build() { return new io.opentracing.contrib.cassandra.QuerySpanNameProvider.FullQuerySpanName();}
+    public QuerySpanNameProvider build() { return new FullQuerySpanName();}
 
   }
 

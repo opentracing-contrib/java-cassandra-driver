@@ -25,7 +25,7 @@ public class QueryMethodTableSpanName implements QuerySpanNameProvider {
 
   public static class Builder implements QuerySpanNameProvider.Builder {
     @Override
-    public QuerySpanNameProvider build() { return new io.opentracing.contrib.cassandra.QuerySpanNameProvider.QueryMethodTableSpanName();}
+    public QuerySpanNameProvider build() { return new QueryMethodTableSpanName();}
 
   }
 

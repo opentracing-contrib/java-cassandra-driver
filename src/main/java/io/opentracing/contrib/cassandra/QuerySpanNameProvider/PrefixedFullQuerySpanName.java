@@ -22,9 +22,9 @@ public class PrefixedFullQuerySpanName implements QuerySpanNameProvider {
 
   public static class Builder implements QuerySpanNameProvider.Builder {
     @Override
-    public QuerySpanNameProvider build() { return new io.opentracing.contrib.cassandra.QuerySpanNameProvider.PrefixedFullQuerySpanName("Cassandra");}
+    public QuerySpanNameProvider build() { return new PrefixedFullQuerySpanName("Cassandra");}
 
-    public QuerySpanNameProvider build(String prefix) {return new io.opentracing.contrib.cassandra.QuerySpanNameProvider.PrefixedFullQuerySpanName(prefix);}
+    public QuerySpanNameProvider build(String prefix) {return new PrefixedFullQuerySpanName(prefix);}
   }
 
   PrefixedFullQuerySpanName(String prefix) {

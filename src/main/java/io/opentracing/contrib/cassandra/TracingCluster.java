@@ -19,6 +19,8 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.opentracing.Tracer;
+import io.opentracing.contrib.cassandra.QuerySpanNameProvider.CustomStringSpanName;
+import io.opentracing.contrib.cassandra.QuerySpanNameProvider.QuerySpanNameProvider;
 
 /**
  * Tracing decorator for {@link Cluster}
@@ -26,10 +28,18 @@ import io.opentracing.Tracer;
 public class TracingCluster extends Cluster {
 
   private final Tracer tracer;
+  private final QuerySpanNameProvider querySpanNameProvider;
 
   public TracingCluster(Initializer initializer, Tracer tracer) {
     super(initializer);
     this.tracer = tracer;
+    this.querySpanNameProvider = CustomStringSpanName.newBuilder().build("execute");
+  }
+
+  public TracingCluster(Initializer initializer, Tracer tracer, QuerySpanNameProvider querySpanNameProvider) {
+    super(initializer);
+    this.tracer = tracer;
+    this.querySpanNameProvider = querySpanNameProvider;
   }
 
   /**
@@ -37,7 +47,7 @@ public class TracingCluster extends Cluster {
    */
   @Override
   public Session newSession() {
-    return new TracingSession(super.newSession(), tracer);
+    return new TracingSession(super.newSession(), tracer, querySpanNameProvider);
   }
 
   /**
@@ -75,7 +85,7 @@ public class TracingCluster extends Cluster {
     return Futures.transform(super.connectAsync(keyspace), new Function<Session, Session>() {
       @Override
       public Session apply(Session session) {
-        return new TracingSession(session, tracer);
+        return new TracingSession(session, tracer, querySpanNameProvider);
       }
     });
   }

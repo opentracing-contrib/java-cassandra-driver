@@ -13,16 +13,7 @@
  */
 package io.opentracing.contrib.cassandra;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.CloseFuture;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.RegularStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.*;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -31,6 +22,7 @@ import io.opentracing.Tracer;
 import io.opentracing.contrib.cassandra.QuerySpanNameProvider.CustomStringSpanName;
 import io.opentracing.contrib.cassandra.QuerySpanNameProvider.QuerySpanNameProvider;
 import io.opentracing.tag.Tags;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.Inet4Address;
@@ -219,15 +211,33 @@ class TracingSession implements Session {
    */
   @Override
   public PreparedStatement prepare(String query) {
-    return session.prepare(query);
+    Span span = buildSpan(query);
+    try {
+      PreparedStatement resultSet = session.prepare(query);
+      finishSpan(span);
+      return resultSet;
+    } catch (Exception e) {
+      finishSpan(span, e);
+      throw e;
+    }
   }
+
 
   /**
    * {@inheritDoc}
    */
   @Override
   public PreparedStatement prepare(RegularStatement statement) {
-    return session.prepare(statement);
+    String query = getQuery(statement);
+    Span span = buildSpan(query);
+    try {
+      PreparedStatement resultSet = session.prepare(statement);
+      finishSpan(span);
+      return resultSet;
+    } catch (Exception e) {
+      finishSpan(span, e);
+      throw e;
+    }
   }
 
   /**
@@ -235,7 +245,10 @@ class TracingSession implements Session {
    */
   @Override
   public ListenableFuture<PreparedStatement> prepareAsync(String query) {
-    return session.prepareAsync(query);
+    final Span span = buildSpan(query);
+    ListenableFuture<PreparedStatement> future = session.prepareAsync(query);
+    future.addListener(createListener(span, future), executorService);
+    return future;
   }
 
   /**
@@ -243,7 +256,11 @@ class TracingSession implements Session {
    */
   @Override
   public ListenableFuture<PreparedStatement> prepareAsync(RegularStatement statement) {
-    return session.prepareAsync(statement);
+    String query = getQuery(statement);
+    final Span span = buildSpan(query);
+    ListenableFuture<PreparedStatement> future = session.prepareAsync(statement);
+    future.addListener(createListener(span, future), executorService);
+    return future;
   }
 
   /**
@@ -307,6 +324,23 @@ class TracingSession implements Session {
     };
   }
 
+  private Runnable createListener(
+      final Span span,
+      final ListenableFuture<PreparedStatement> future
+  ) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        try {
+          future.get();
+          finishSpan(span);
+        } catch (InterruptedException | ExecutionException e) {
+          finishSpan(span, e);
+        }
+      }
+    };
+  }
+
   private Span buildSpan(String query) {
     String querySpanName = querySpanNameProvider.querySpanName(query);
     Tracer.SpanBuilder spanBuilder = tracer.buildSpan(querySpanName)
@@ -342,6 +376,10 @@ class TracingSession implements Session {
       }
 
     }
+    span.finish();
+  }
+
+  private static void finishSpan(Span span) {
     span.finish();
   }
 

@@ -71,6 +71,11 @@
       <artifactId>opentracing-util</artifactId>
       <version>${opentracing.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.opentracing.contrib</groupId>
+      <artifactId>opentracing-concurrent</artifactId>
+      <version>0.1.0</version>
+    </dependency>
 
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
@@ -85,6 +90,12 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>com.datastax.cassandra</groupId>
+      <artifactId>cassandra-driver-mapping</artifactId>
+      <version>3.5.0</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.cassandraunit</groupId>
       <artifactId>cassandra-unit</artifactId>

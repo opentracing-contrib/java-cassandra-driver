@@ -15,10 +15,8 @@ package io.opentracing.contrib.cassandra;
 
 import static org.junit.Assert.*;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.Session;
+import com.datastax.driver.core.*;
+import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.Table;
@@ -32,6 +30,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
 public class CassandraMappingTest {
@@ -63,30 +63,34 @@ public class CassandraMappingTest {
     //when
     try (Scope ignored = mockTracer.buildSpan("test operation").startActive(true)) {
       MappingManager mappingManager = new MappingManager(session);
-      mappingManager.mapper(Book.class).save(new Book(UUID.randomUUID(), "random book"));
+      Mapper<Book> mapper = mappingManager.mapper(Book.class);
+      mapper.save(new Book(UUID.randomUUID(), "random book"));
       session.close();
     }
 
     //then
-    MockSpan testOperation = findSpanWithNameStartingWith("test operation");
-    MockSpan testedOperation = findSpanWithNameStartingWith("tested operation");
+    List<MockSpan> testOperation = findSpansWithNameStartingWith("test operation");
+    List<MockSpan> testedOperations = findSpansWithNameStartingWith("tested operation");
 
-    assertNotNull(testOperation);
-    assertNotNull(testedOperation);
-    assertEquals(
-        "'tested operation' span should be a child of wrapping 'test operation' span",
-        testOperation.context().spanId(),
-        testedOperation.parentId()
-    );
+    assertEquals(1, testOperation.size());
+    assertEquals(2, testedOperations.size()); /* 1st for prepare, 2nd for execute */
+    for (MockSpan testedSpan : testedOperations) {
+      assertEquals(
+          testedSpan.operationName() + " span should be a child of wrapping 'test operation' span",
+          testOperation.get(0).context().spanId(),
+          testedSpan.parentId()
+      );
+    }
   }
 
-  private MockSpan findSpanWithNameStartingWith(String operationNamePrefix) {
+  private List<MockSpan> findSpansWithNameStartingWith(String operationNamePrefix) {
+    List<MockSpan> results = new LinkedList<>();
     for (MockSpan mockSpan : mockTracer.finishedSpans()) {
       if(mockSpan.operationName().startsWith(operationNamePrefix)) {
-        return mockSpan;
+        results.add(mockSpan);
       }
     }
-    return null;
+    return results;
   }
 
   private Session createSession() {

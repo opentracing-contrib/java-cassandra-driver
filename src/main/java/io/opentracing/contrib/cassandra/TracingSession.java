@@ -13,23 +13,16 @@
  */
 package io.opentracing.contrib.cassandra;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.CloseFuture;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.RegularStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.*;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.contrib.cassandra.QuerySpanNameProvider.CustomStringSpanName;
 import io.opentracing.contrib.cassandra.QuerySpanNameProvider.QuerySpanNameProvider;
+import io.opentracing.contrib.concurrent.TracedExecutorService;
 import io.opentracing.tag.Tags;
 
 import java.io.PrintWriter;
@@ -50,21 +43,23 @@ import java.util.concurrent.Executors;
 class TracingSession implements Session {
 
   static final String COMPONENT_NAME = "java-cassandra";
-  private final ExecutorService executorService = Executors.newCachedThreadPool();
   private final Session session;
   private final Tracer tracer;
+  private final ExecutorService executorService;
   private final QuerySpanNameProvider querySpanNameProvider;
 
   TracingSession(Session session, Tracer tracer) {
     this.session = session;
     this.tracer = tracer;
     this.querySpanNameProvider = CustomStringSpanName.newBuilder().build("execute");
+    this.executorService = new TracedExecutorService(Executors.newCachedThreadPool(), tracer);
   }
 
   TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider) {
     this.session = session;
     this.tracer = tracer;
     this.querySpanNameProvider = querySpanNameProvider;
+    this.executorService = new TracedExecutorService(Executors.newCachedThreadPool(), tracer);
   }
 
   /**
@@ -101,7 +96,7 @@ class TracingSession implements Session {
    */
   @Override
   public ResultSet execute(String query) {
-    Span span = buildSpan(query);
+    Span span = buildExecuteSpan(query);
     ResultSet resultSet;
     try {
       resultSet = session.execute(query);
@@ -119,7 +114,7 @@ class TracingSession implements Session {
    */
   @Override
   public ResultSet execute(String query, Object... values) {
-    Span span = buildSpan(query);
+    Span span = buildExecuteSpan(query);
     ResultSet resultSet;
     try {
       resultSet = session.execute(query, values);
@@ -136,7 +131,7 @@ class TracingSession implements Session {
    */
   @Override
   public ResultSet execute(String query, Map<String, Object> values) {
-    Span span = buildSpan(query);
+    Span span = buildExecuteSpan(query);
     ResultSet resultSet;
     try {
       resultSet = session.execute(query, values);
@@ -154,7 +149,7 @@ class TracingSession implements Session {
   @Override
   public ResultSet execute(Statement statement) {
     String query = getQuery(statement);
-    Span span = buildSpan(query);
+    Span span = buildExecuteSpan(query);
     ResultSet resultSet = null;
     try {
       resultSet = session.execute(statement);
@@ -171,7 +166,7 @@ class TracingSession implements Session {
    */
   @Override
   public ResultSetFuture executeAsync(String query) {
-    final Span span = buildSpan(query);
+    final Span span = buildExecuteSpan(query);
     ResultSetFuture future = session.executeAsync(query);
     future.addListener(createListener(span, future), executorService);
 
@@ -183,7 +178,7 @@ class TracingSession implements Session {
    */
   @Override
   public ResultSetFuture executeAsync(String query, Object... values) {
-    final Span span = buildSpan(query);
+    final Span span = buildExecuteSpan(query);
     ResultSetFuture future = session.executeAsync(query, values);
     future.addListener(createListener(span, future), executorService);
 
@@ -195,7 +190,7 @@ class TracingSession implements Session {
    */
   @Override
   public ResultSetFuture executeAsync(String query, Map<String, Object> values) {
-    final Span span = buildSpan(query);
+    final Span span = buildExecuteSpan(query);
     ResultSetFuture future = session.executeAsync(query, values);
     future.addListener(createListener(span, future), executorService);
 
@@ -208,29 +203,29 @@ class TracingSession implements Session {
   @Override
   public ResultSetFuture executeAsync(Statement statement) {
     String query = getQuery(statement);
-    final Span span = buildSpan(query);
+    final Span span = buildExecuteSpan(query);
     ResultSetFuture future = session.executeAsync(statement);
     future.addListener(createListener(span, future), executorService);
 
     return future;
   }
 
+
   /**
    * {@inheritDoc}
    */
   @Override
   public PreparedStatement prepare(String query) {
-    Span span = buildSpan(query);
+    Span span = buildPrepareSpan(query);
     try {
-      PreparedStatement resultSet = session.prepare(query);
+      PreparedStatement preparedStatement = session.prepare(query);
       finishSpan(span);
-      return resultSet;
+      return preparedStatement;
     } catch (Exception e) {
       finishSpan(span, e);
       throw e;
     }
   }
-
 
   /**
    * {@inheritDoc}
@@ -238,11 +233,11 @@ class TracingSession implements Session {
   @Override
   public PreparedStatement prepare(RegularStatement statement) {
     String query = getQuery(statement);
-    Span span = buildSpan(query);
+    Span span = buildPrepareSpan(query);
     try {
-      PreparedStatement resultSet = session.prepare(statement);
+      PreparedStatement preparedStatement = session.prepare(statement);
       finishSpan(span);
-      return resultSet;
+      return preparedStatement;
     } catch (Exception e) {
       finishSpan(span, e);
       throw e;
@@ -254,7 +249,7 @@ class TracingSession implements Session {
    */
   @Override
   public ListenableFuture<PreparedStatement> prepareAsync(String query) {
-    final Span span = buildSpan(query);
+    final Span span = buildPrepareSpan(query);
     ListenableFuture<PreparedStatement> future = session.prepareAsync(query);
     future.addListener(createListener(span, future), executorService);
     return future;
@@ -266,7 +261,7 @@ class TracingSession implements Session {
   @Override
   public ListenableFuture<PreparedStatement> prepareAsync(RegularStatement statement) {
     String query = getQuery(statement);
-    final Span span = buildSpan(query);
+    final Span span = buildPrepareSpan(query);
     ListenableFuture<PreparedStatement> future = session.prepareAsync(statement);
     future.addListener(createListener(span, future), executorService);
     return future;
@@ -350,22 +345,20 @@ class TracingSession implements Session {
     };
   }
 
-  private Span buildSpan(String query) {
+  private Span buildExecuteSpan(String query) {
     String querySpanName = querySpanNameProvider.querySpanName(query);
-    Tracer.SpanBuilder spanBuilder = tracer.buildSpan(querySpanName)
-        .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
-
+    Tracer.SpanBuilder spanBuilder = tracer.buildSpan(querySpanName);
     Span span = spanBuilder.start();
+    setTags(span, query);
+    return span;
+  }
 
-    Tags.COMPONENT.set(span, COMPONENT_NAME);
-    Tags.DB_STATEMENT.set(span, query);
-    Tags.DB_TYPE.set(span, "cassandra");
-
-    String keyspace = getLoggedKeyspace();
-    if (keyspace != null) {
-      Tags.DB_INSTANCE.set(span, keyspace);
-    }
-
+  private Span buildPrepareSpan(String query) {
+    //TODO: parameterize querySpanName/add new method/add new interface
+    String querySpanName = querySpanNameProvider.querySpanName("prepare statement: " + query);
+    Tracer.SpanBuilder spanBuilder = tracer.buildSpan(querySpanName);
+    Span span = spanBuilder.start();
+    setTags(span, query);
     return span;
   }
 
@@ -411,5 +404,17 @@ class TracingSession implements Session {
     errorLogs.put("stack", sw.toString());
 
     return errorLogs;
+  }
+
+  private void setTags(Span span, String query) {
+    Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT);
+    Tags.COMPONENT.set(span, COMPONENT_NAME);
+    Tags.DB_STATEMENT.set(span, query);
+    Tags.DB_TYPE.set(span, "cassandra");
+
+    String keyspace = getLoggedKeyspace();
+    if (keyspace != null) {
+      Tags.DB_INSTANCE.set(span, keyspace);
+    }
   }
 }

@@ -19,8 +19,8 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.opentracing.Tracer;
-import io.opentracing.contrib.cassandra.QuerySpanNameProvider.CustomStringSpanName;
-import io.opentracing.contrib.cassandra.QuerySpanNameProvider.QuerySpanNameProvider;
+import io.opentracing.contrib.cassandra.nameprovider.CustomStringSpanName;
+import io.opentracing.contrib.cassandra.nameprovider.QuerySpanNameProvider;
 
 /**
  * Tracing decorator for {@link Cluster}

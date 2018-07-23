@@ -11,32 +11,24 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.opentracing.contrib.cassandra.QuerySpanNameProvider;
+package io.opentracing.contrib.cassandra.nameprovider;
 
 /**
  * @author Jordan J Lopez
- *  Returns the full query as the span name
  */
-public class FullQuerySpanName implements QuerySpanNameProvider {
+public interface QuerySpanNameProvider {
 
-  public static class Builder implements QuerySpanNameProvider.Builder {
-    @Override
-    public QuerySpanNameProvider build() { return new FullQuerySpanName();}
+  public interface Builder {
 
+    QuerySpanNameProvider build();
   }
 
-  FullQuerySpanName() {
+  /**
+   * Given a Cassandra query, return a name for the span
+   *
+   * @param query Cassandra query
+   * @return Name for query's span
+   */
+  String querySpanName(String query);
 
-  }
-
-  @Override
-  public String querySpanName(String query) {
-    if(query == null || query.equals("")) {
-      return "N/A";
-    } else {
-      return query;
-    }
-  }
-
-  public static Builder newBuilder() { return new Builder();}
 }

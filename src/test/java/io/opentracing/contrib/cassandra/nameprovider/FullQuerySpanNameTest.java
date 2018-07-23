@@ -11,16 +11,19 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.opentracing.contrib.cassandra.QuerySpanNameProvider;
+package io.opentracing.contrib.cassandra.nameprovider;
 
-import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
+import org.junit.Test;
+
 public class FullQuerySpanNameTest {
+
   @Test
   public void fullQuerySpanNameTest() {
     QuerySpanNameProvider fullQuerySpanName = FullQuerySpanName.newBuilder().build();
-    assertEquals("SELECT * FROM test.table_name;", fullQuerySpanName.querySpanName("SELECT * FROM test.table_name;"));
+    assertEquals("SELECT * FROM test.table_name;",
+        fullQuerySpanName.querySpanName("SELECT * FROM test.table_name;"));
     assertEquals("N/A", fullQuerySpanName.querySpanName(""));
     assertEquals("N/A", fullQuerySpanName.querySpanName(null));
   }

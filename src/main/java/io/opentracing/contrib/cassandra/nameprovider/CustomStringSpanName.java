@@ -11,27 +11,32 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.opentracing.contrib.cassandra.QuerySpanNameProvider;
+package io.opentracing.contrib.cassandra.nameprovider;
 
 /**
  * @author Jordan J Lopez
- *  Returns a predifined string for every span
+ * Returns a predifined string for every span
  */
 public class CustomStringSpanName implements QuerySpanNameProvider {
 
   private String customString;
 
   public static class Builder implements QuerySpanNameProvider.Builder {
+
     // Defaults to "execute"
     @Override
-    public QuerySpanNameProvider build() { return new CustomStringSpanName("execute");}
+    public QuerySpanNameProvider build() {
+      return new CustomStringSpanName("execute");
+    }
 
     // Provide customString
-    public QuerySpanNameProvider build(String customString) { return new CustomStringSpanName(customString);}
+    public QuerySpanNameProvider build(String customString) {
+      return new CustomStringSpanName(customString);
+    }
   }
 
   CustomStringSpanName(String customString) {
-    if(customString == null) {
+    if (customString == null) {
       this.customString = "execute";
     } else {
       this.customString = customString;
@@ -43,5 +48,7 @@ public class CustomStringSpanName implements QuerySpanNameProvider {
     return customString;
   }
 
-  public static Builder newBuilder() { return new Builder();}
+  public static Builder newBuilder() {
+    return new Builder();
+  }
 }

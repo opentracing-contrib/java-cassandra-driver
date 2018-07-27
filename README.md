@@ -193,6 +193,9 @@ session.execute("CREATE TABLE IF NOT EXISTS example.table;")
 
 ```
 
+## License
+
+[Apache 2.0 License](./LICENSE).
 
 [ci-img]: https://travis-ci.org/opentracing-contrib/java-cassandra-driver.svg?branch=master
 [ci]: https://travis-ci.org/opentracing-contrib/java-cassandra-driver

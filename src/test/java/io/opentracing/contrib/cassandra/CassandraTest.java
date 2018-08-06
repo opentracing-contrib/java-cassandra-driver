@@ -13,8 +13,7 @@
  */
 package io.opentracing.contrib.cassandra;
 
-import static org.awaitility.Awaitility.await;
-import static org.hamcrest.core.IsEqual.equalTo;
+import static io.opentracing.contrib.cassandra.TestUtil.waitForSpans;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -35,12 +34,10 @@ import io.opentracing.Scope;
 import io.opentracing.mock.MockSpan;
 import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
-import io.opentracing.util.ThreadLocalScopeManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
@@ -50,8 +47,7 @@ import org.junit.Test;
 
 public class CassandraTest {
 
-  private static final MockTracer mockTracer = new MockTracer(new ThreadLocalScopeManager(),
-      MockTracer.Propagator.TEXT_MAP);
+  private static final MockTracer mockTracer = new MockTracer();
 
   @Before
   public void before() throws Exception {
@@ -73,7 +69,7 @@ public class CassandraTest {
     insertAsync(session);
     session.closeAsync().get(15, TimeUnit.SECONDS);
 
-    await().atMost(15, TimeUnit.SECONDS).until(reportedSpansSize(), equalTo(5));
+    waitForSpans(mockTracer, 5);
 
     List<MockSpan> finished = mockTracer.finishedSpans();
     assertEquals(5, finished.size());
@@ -129,7 +125,7 @@ public class CassandraTest {
     } catch (Exception ignored) {
     }
 
-    await().atMost(15, TimeUnit.SECONDS).until(reportedSpansSize(), equalTo(1));
+    waitForSpans(mockTracer, 1);
     List<MockSpan> finished = mockTracer.finishedSpans();
     assertEquals(1, finished.size());
     MockSpan span = finished.get(0);
@@ -160,7 +156,7 @@ public class CassandraTest {
     } catch (Exception ignored) {
     }
 
-    await().atMost(15, TimeUnit.SECONDS).until(reportedSpansSize(), equalTo(1));
+    waitForSpans(mockTracer, 1);
     List<MockSpan> finished = mockTracer.finishedSpans();
     assertEquals(1, finished.size());
     MockSpan span = finished.get(0);
@@ -191,7 +187,7 @@ public class CassandraTest {
     } catch (Exception ignored) {
     }
 
-    await().atMost(15, TimeUnit.SECONDS).until(reportedSpansSize(), equalTo(1));
+    waitForSpans(mockTracer, 1);
     List<MockSpan> finished = mockTracer.finishedSpans();
     assertEquals(1, finished.size());
     MockSpan span = finished.get(0);
@@ -232,7 +228,7 @@ public class CassandraTest {
     } catch (Exception ignored) {
     }
 
-    await().atMost(15, TimeUnit.SECONDS).until(reportedSpansSize(), equalTo(1));
+    waitForSpans(mockTracer, 1);
     List<MockSpan> finished = mockTracer.finishedSpans();
     assertEquals(1, finished.size());
     MockSpan span = finished.get(0);
@@ -249,7 +245,7 @@ public class CassandraTest {
     session.execute("SELECT * FROM system_schema.keyspaces;");
     parentSpan.close();
 
-    await().atMost(15, TimeUnit.SECONDS).until(reportedSpansSize(), equalTo(3));
+    waitForSpans(mockTracer, 3);
 
     List<MockSpan> finished = mockTracer.finishedSpans();
     assertEquals(3, finished.size());
@@ -467,12 +463,5 @@ public class CassandraTest {
     return cluster.connectAsync("system");
   }
 
-  private Callable<Integer> reportedSpansSize() {
-    return new Callable<Integer>() {
-      @Override
-      public Integer call() {
-        return mockTracer.finishedSpans().size();
-      }
-    };
-  }
+
 }

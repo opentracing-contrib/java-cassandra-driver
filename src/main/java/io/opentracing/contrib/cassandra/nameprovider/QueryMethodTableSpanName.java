@@ -151,15 +151,15 @@ public class QueryMethodTableSpanName implements QuerySpanNameProvider {
     returns the enum for the found manipulation method.
    */
   private ManipulationMethod getManipulationMethod(String query) {
-    ManipulationMethod retMethod = ManipulationMethod.NOT_FOUND;
-    String upperQuery = query.toUpperCase();
-    for (String method : CASSANDRA_MANIPULATION_METHODS) {
-      if (upperQuery.contains(method)) {
-        retMethod = ManipulationMethod.valueOf(method.replace(' ', '_'));
-        break;
+    String[] queryParts = query.toUpperCase().split("\\s+");
+    for (String queryPart : queryParts) {
+      for (String method : CASSANDRA_MANIPULATION_METHODS) {
+        if (queryPart.contains(method)) {
+          return ManipulationMethod.valueOf(method);
+        }
       }
     }
-    return retMethod;
+    return ManipulationMethod.NOT_FOUND;
   }
 
   /*
@@ -168,15 +168,14 @@ public class QueryMethodTableSpanName implements QuerySpanNameProvider {
     the enum for the found definition method.
    */
   private DefinitionMethod getDefininitionMethod(String query) {
-    DefinitionMethod retMethod = DefinitionMethod.NOT_FOUND;
-    String upperQuery = query.toUpperCase();
+    String upperQuery = query.toUpperCase().replaceAll("\\s{2,}", " ").trim();
+
     for (String method : CASSANDRA_DEFINITION_METHODS) {
-      if (upperQuery.contains(method)) {
-        retMethod = DefinitionMethod.valueOf(method.replace(' ', '_'));
-        break;
+      if (upperQuery.startsWith(method)) {
+        return DefinitionMethod.valueOf(method.replace(' ', '_'));
       }
     }
-    return retMethod;
+    return DefinitionMethod.NOT_FOUND;
   }
 
   /*
@@ -187,7 +186,7 @@ public class QueryMethodTableSpanName implements QuerySpanNameProvider {
     // Regex to find the first word (containing only alphanumeric, period, or underscore characters)
     // that occurs after the String after
     Pattern findTablePattern = Pattern.compile(Pattern.quote(after) + " ([\\w.]+)");
-    Matcher matcher = findTablePattern.matcher(query);
+    Matcher matcher = findTablePattern.matcher(query.replaceAll("\\s{2,}", " "));
     if (matcher.find()) {
       return matcher.group(1);
     } else {

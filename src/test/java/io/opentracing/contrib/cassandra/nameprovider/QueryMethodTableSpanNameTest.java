@@ -51,7 +51,7 @@ public class QueryMethodTableSpanNameTest {
 
   @Test
   public void definitionMethodTest() {
-    QuerySpanNameProvider querySpanNameProvider = new QueryMethodTableSpanName().newBuilder()
+    QuerySpanNameProvider querySpanNameProvider = QueryMethodTableSpanName.newBuilder()
         .build();
     // USE
     assertEquals("Cassandra.USE - test", querySpanNameProvider.querySpanName("USE test;"));
@@ -158,7 +158,7 @@ public class QueryMethodTableSpanNameTest {
 
   @Test
   public void testInvalaidMethod() {
-    QuerySpanNameProvider querySpanNameProvider = new QueryMethodTableSpanName().newBuilder()
+    QuerySpanNameProvider querySpanNameProvider = QueryMethodTableSpanName.newBuilder()
         .build();
     assertEquals("Cassandra", querySpanNameProvider.querySpanName(""));
     assertEquals("Cassandra", querySpanNameProvider.querySpanName(null));

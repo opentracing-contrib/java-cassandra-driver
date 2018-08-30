@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import io.opentracing.Tracer;
 import io.opentracing.contrib.cassandra.nameprovider.CustomStringSpanName;
 import io.opentracing.contrib.cassandra.nameprovider.QuerySpanNameProvider;
+import io.opentracing.util.GlobalTracer;
 
 /**
  * Tracing decorator for {@link Cluster}
@@ -36,10 +37,25 @@ public class TracingCluster extends Cluster {
     this.querySpanNameProvider = CustomStringSpanName.newBuilder().build("execute");
   }
 
-  public TracingCluster(Initializer initializer, Tracer tracer, QuerySpanNameProvider querySpanNameProvider) {
+  /**
+   * GlobalTracer is used to get tracer
+   */
+  public TracingCluster(Initializer initializer) {
+    this(initializer, GlobalTracer.get());
+  }
+
+  public TracingCluster(Initializer initializer, Tracer tracer,
+      QuerySpanNameProvider querySpanNameProvider) {
     super(initializer);
     this.tracer = tracer;
     this.querySpanNameProvider = querySpanNameProvider;
+  }
+
+  /**
+   * GlobalTracer is used to get tracer
+   */
+  public TracingCluster(Initializer initializer, QuerySpanNameProvider querySpanNameProvider) {
+    this(initializer, GlobalTracer.get(), querySpanNameProvider);
   }
 
   /**

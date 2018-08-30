@@ -20,6 +20,9 @@ pom.xml
 // Instantiate tracer
 Tracer tracer = ...
 
+// Optionally register tracer with GlobalTracer
+GlobalTracer.register(tracer);
+
 // Instantiate Cluster Builder
  Cluster.Builder builder = Cluster.builder().addContactPoints("127.0.0.1").withPort(9142);
 

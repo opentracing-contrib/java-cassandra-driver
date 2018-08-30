@@ -45,6 +45,7 @@ public class CassandraMappingTest {
   public void before() throws Exception {
     System.setProperty("java.library.path", "src/test/resources/libs");
     EmbeddedCassandraServerHelper.startEmbeddedCassandra();
+    EmbeddedCassandraServerHelper.getSession();
     Session session = createSession();
     createKeyspace(session);
     createTable(session);

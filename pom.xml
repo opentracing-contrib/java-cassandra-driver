@@ -62,7 +62,7 @@
 
     <opentracing.version>0.31.0</opentracing.version>
     <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
-    <jacoco-maven-plugin.version>0.8.1</jacoco-maven-plugin.version>
+    <jacoco-maven-plugin.version>0.8.2</jacoco-maven-plugin.version>
     <cassandra.version>3.5.1</cassandra.version>
   </properties>
 
@@ -89,7 +89,7 @@
     <dependency>
       <groupId>org.cassandraunit</groupId>
       <artifactId>cassandra-unit</artifactId>
-      <version>3.3.0.2</version>
+      <version>3.5.0.1</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -109,7 +109,7 @@
     <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
-      <version>3.1.0</version>
+      <version>3.1.2</version>
       <scope>test</scope>
     </dependency>
 
@@ -126,7 +126,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.7.0</version>
+        <version>3.8.0</version>
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
@@ -236,7 +236,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>3.0.0</version>
+            <version>3.0.1</version>
             <configuration>
               <failOnError>false</failOnError>
             </configuration>

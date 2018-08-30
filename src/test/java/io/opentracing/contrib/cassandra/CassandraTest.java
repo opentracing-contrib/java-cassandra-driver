@@ -54,6 +54,7 @@ public class CassandraTest {
     System.setProperty("java.library.path", "src/test/resources/libs");
     mockTracer.reset();
     EmbeddedCassandraServerHelper.startEmbeddedCassandra();
+    EmbeddedCassandraServerHelper.getSession();
   }
 
   @After

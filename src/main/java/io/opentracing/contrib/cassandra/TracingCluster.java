@@ -71,7 +71,7 @@ public class TracingCluster extends Cluster {
    */
   @Override
   public Session newSession() {
-    return new TracingSession(super.newSession(), tracer, querySpanNameProvider);
+    return new TracingSession(super.newSession(), tracer, querySpanNameProvider, executorService);
   }
 
   /**
@@ -109,7 +109,7 @@ public class TracingCluster extends Cluster {
     return Futures.transform(super.connectAsync(keyspace), new Function<Session, Session>() {
       @Override
       public Session apply(Session session) {
-        return new TracingSession(session, tracer, querySpanNameProvider);
+        return new TracingSession(session, tracer, querySpanNameProvider, executorService);
       }
     });
   }

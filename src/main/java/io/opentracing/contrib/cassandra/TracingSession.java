@@ -49,7 +49,7 @@ import java.util.concurrent.Executors;
 class TracingSession implements Session {
 
   static final String COMPONENT_NAME = "java-cassandra";
-  private final ExecutorService executorService = Executors.newCachedThreadPool();
+  private final ExecutorService executorService;
   private final Session session;
   private final Tracer tracer;
   private final QuerySpanNameProvider querySpanNameProvider;
@@ -58,13 +58,23 @@ class TracingSession implements Session {
     this.session = session;
     this.tracer = tracer;
     this.querySpanNameProvider = CustomStringSpanName.newBuilder().build("execute");
+    this.executorService = Executors.newCachedThreadPool();
   }
 
   TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider) {
     this.session = session;
     this.tracer = tracer;
     this.querySpanNameProvider = querySpanNameProvider;
+    this.executorService = Executors.newCachedThreadPool();
   }
+
+  TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider, ExecutorService executorService) {
+    this.session = session;
+    this.tracer = tracer;
+    this.querySpanNameProvider = querySpanNameProvider;
+    this.executorService = executorService;
+  }
+
 
   /**
    * {@inheritDoc}
@@ -79,7 +89,7 @@ class TracingSession implements Session {
    */
   @Override
   public Session init() {
-    return new TracingSession(session.init(), tracer);
+    return new TracingSession(session.init(), tracer, querySpanNameProvider, executorService);
   }
 
   /**

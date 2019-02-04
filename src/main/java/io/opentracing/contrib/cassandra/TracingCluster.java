@@ -23,6 +23,9 @@ import io.opentracing.contrib.cassandra.nameprovider.CustomStringSpanName;
 import io.opentracing.contrib.cassandra.nameprovider.QuerySpanNameProvider;
 import io.opentracing.util.GlobalTracer;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
  * Tracing decorator for {@link Cluster}
  */
@@ -30,11 +33,10 @@ public class TracingCluster extends Cluster {
 
   private final Tracer tracer;
   private final QuerySpanNameProvider querySpanNameProvider;
+  private final ExecutorService executorService;
 
   public TracingCluster(Initializer initializer, Tracer tracer) {
-    super(initializer);
-    this.tracer = tracer;
-    this.querySpanNameProvider = CustomStringSpanName.newBuilder().build("execute");
+    this(initializer, tracer, CustomStringSpanName.newBuilder().build("execute"));
   }
 
   /**
@@ -46,9 +48,16 @@ public class TracingCluster extends Cluster {
 
   public TracingCluster(Initializer initializer, Tracer tracer,
       QuerySpanNameProvider querySpanNameProvider) {
+    this(initializer, tracer, querySpanNameProvider, Executors.newCachedThreadPool());
+  }
+
+  public TracingCluster(Initializer initializer, Tracer tracer,
+                        QuerySpanNameProvider querySpanNameProvider,
+                        ExecutorService executorService) {
     super(initializer);
     this.tracer = tracer;
     this.querySpanNameProvider = querySpanNameProvider;
+    this.executorService = executorService;
   }
 
   /**

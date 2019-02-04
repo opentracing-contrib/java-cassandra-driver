@@ -43,9 +43,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Package private decorator for {@link Session} Instantiated only by TracingCluster
+ * Decorator for {@link Session} Instantiated by TracingCluster
  */
-class TracingSession implements Session {
+public class TracingSession implements Session {
 
   static final String COMPONENT_NAME = "java-cassandra";
   private final ExecutorService executorService;
@@ -53,28 +53,26 @@ class TracingSession implements Session {
   private final Tracer tracer;
   private final QuerySpanNameProvider querySpanNameProvider;
 
-  TracingSession(Session session, Tracer tracer) {
+  public TracingSession(Session session, Tracer tracer) {
     this.session = session;
     this.tracer = tracer;
     this.querySpanNameProvider = CustomStringSpanName.newBuilder().build("execute");
     this.executorService = Executors.newCachedThreadPool();
   }
 
-  TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider) {
+  public TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider) {
     this.session = session;
     this.tracer = tracer;
     this.querySpanNameProvider = querySpanNameProvider;
     this.executorService = Executors.newCachedThreadPool();
   }
 
-  TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider,
-      ExecutorService executorService) {
+  public TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider, ExecutorService executorService) {
     this.session = session;
     this.tracer = tracer;
     this.querySpanNameProvider = querySpanNameProvider;
     this.executorService = executorService;
   }
-
 
   /**
    * {@inheritDoc}

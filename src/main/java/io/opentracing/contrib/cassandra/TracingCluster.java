@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenTracing Authors
+ * Copyright 2017-2019 The OpenTracing Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -22,7 +22,6 @@ import io.opentracing.Tracer;
 import io.opentracing.contrib.cassandra.nameprovider.CustomStringSpanName;
 import io.opentracing.contrib.cassandra.nameprovider.QuerySpanNameProvider;
 import io.opentracing.util.GlobalTracer;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -52,8 +51,8 @@ public class TracingCluster extends Cluster {
   }
 
   public TracingCluster(Initializer initializer, Tracer tracer,
-                        QuerySpanNameProvider querySpanNameProvider,
-                        ExecutorService executorService) {
+      QuerySpanNameProvider querySpanNameProvider,
+      ExecutorService executorService) {
     super(initializer);
     this.tracer = tracer;
     this.querySpanNameProvider = querySpanNameProvider;

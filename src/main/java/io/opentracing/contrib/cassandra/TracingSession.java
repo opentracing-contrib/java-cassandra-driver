@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenTracing Authors
+ * Copyright 2017-2019 The OpenTracing Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -43,8 +43,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Package private decorator for {@link Session}
- * Instantiated only by TracingCluster
+ * Package private decorator for {@link Session} Instantiated only by TracingCluster
  */
 class TracingSession implements Session {
 
@@ -68,7 +67,8 @@ class TracingSession implements Session {
     this.executorService = Executors.newCachedThreadPool();
   }
 
-  TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider, ExecutorService executorService) {
+  TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider,
+      ExecutorService executorService) {
     this.session = session;
     this.tracer = tracer;
     this.querySpanNameProvider = querySpanNameProvider;

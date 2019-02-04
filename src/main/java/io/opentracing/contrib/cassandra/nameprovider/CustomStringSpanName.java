@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenTracing Authors
+ * Copyright 2017-2019 The OpenTracing Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -14,8 +14,7 @@
 package io.opentracing.contrib.cassandra.nameprovider;
 
 /**
- * @author Jordan J Lopez
- * Returns a predifined string for every span
+ * @author Jordan J Lopez Returns a predifined string for every span
  */
 public class CustomStringSpanName implements QuerySpanNameProvider {
 

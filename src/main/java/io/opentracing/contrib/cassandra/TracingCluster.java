@@ -14,9 +14,9 @@
 package io.opentracing.contrib.cassandra;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.GuavaCompatibility;
 import com.datastax.driver.core.Session;
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.opentracing.Tracer;
 import io.opentracing.contrib.cassandra.nameprovider.CustomStringSpanName;
@@ -106,7 +106,7 @@ public class TracingCluster extends Cluster {
    */
   @Override
   public ListenableFuture<Session> connectAsync(String keyspace) {
-    return Futures.transform(super.connectAsync(keyspace), new Function<Session, Session>() {
+    return GuavaCompatibility.INSTANCE.transform(super.connectAsync(keyspace), new Function<Session, Session>() {
       @Override
       public Session apply(Session session) {
         return new TracingSession(session, tracer, querySpanNameProvider, executorService);

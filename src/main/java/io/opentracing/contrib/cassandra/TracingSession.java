@@ -16,6 +16,7 @@ package io.opentracing.contrib.cassandra;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.CloseFuture;
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.GuavaCompatibility;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.RegularStatement;
@@ -24,7 +25,6 @@ import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.Statement;
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
@@ -95,7 +95,7 @@ public class TracingSession implements Session {
    */
   @Override
   public ListenableFuture<Session> initAsync() {
-    return Futures.transform(session.initAsync(), new Function<Session, Session>() {
+    return GuavaCompatibility.INSTANCE.transform(session.initAsync(), new Function<Session, Session>() {
       @Override
       public Session apply(Session session) {
         return new TracingSession(session, tracer);

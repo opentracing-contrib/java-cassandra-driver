@@ -60,14 +60,16 @@ public class TracingSession implements Session {
     this.executorService = Executors.newCachedThreadPool();
   }
 
-  public TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider) {
+  public TracingSession(Session session, Tracer tracer,
+      QuerySpanNameProvider querySpanNameProvider) {
     this.session = session;
     this.tracer = tracer;
     this.querySpanNameProvider = querySpanNameProvider;
     this.executorService = Executors.newCachedThreadPool();
   }
 
-  public TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider, ExecutorService executorService) {
+  public TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider,
+      ExecutorService executorService) {
     this.session = session;
     this.tracer = tracer;
     this.querySpanNameProvider = querySpanNameProvider;
@@ -95,12 +97,13 @@ public class TracingSession implements Session {
    */
   @Override
   public ListenableFuture<Session> initAsync() {
-    return GuavaCompatibility.INSTANCE.transform(session.initAsync(), new Function<Session, Session>() {
-      @Override
-      public Session apply(Session session) {
-        return new TracingSession(session, tracer);
-      }
-    });
+    return GuavaCompatibility.INSTANCE
+        .transform(session.initAsync(), new Function<Session, Session>() {
+          @Override
+          public Session apply(Session session) {
+            return new TracingSession(session, tracer);
+          }
+        });
   }
 
   /**

@@ -240,26 +240,28 @@ public class CassandraTest {
   public void withParent() throws Exception {
     Session session = createSession();
 
-    Scope parentSpan = mockTracer.buildSpan("parent").startActive(true);
+    MockSpan parentSpan = mockTracer.buildSpan("parent").start();
 
-    session.executeAsync("SELECT * FROM system_schema.keyspaces;").get();
-    session.execute("SELECT * FROM system_schema.keyspaces;");
-    parentSpan.close();
+    try (Scope ignored = mockTracer.activateSpan(parentSpan)) {
+      session.executeAsync("SELECT * FROM system_schema.keyspaces;").get();
+      session.execute("SELECT * FROM system_schema.keyspaces;");
+    } finally {
+      parentSpan.finish();
+    }
 
     waitForSpans(mockTracer, 3);
 
     List<MockSpan> finished = mockTracer.finishedSpans();
     assertEquals(3, finished.size());
-    MockSpan parent = (MockSpan) parentSpan.span();
     List<MockSpan> childSpans = new ArrayList<>();
     for (MockSpan mockSpan : finished) {
-      if (mockSpan.context().spanId() == parent.context().spanId()) {
+      if (mockSpan.context().spanId() == parentSpan.context().spanId()) {
         // skip parent span
         continue;
       }
       childSpans.add(mockSpan);
-      assertEquals(parent.context().spanId(), mockSpan.parentId());
-      assertEquals(parent.context().traceId(), mockSpan.context().traceId());
+      assertEquals(parentSpan.context().spanId(), mockSpan.parentId());
+      assertEquals(parentSpan.context().traceId(), mockSpan.context().traceId());
     }
     assertEquals(2, childSpans.size());
 

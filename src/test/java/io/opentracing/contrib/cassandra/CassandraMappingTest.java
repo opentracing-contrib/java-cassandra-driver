@@ -63,10 +63,12 @@ public class CassandraMappingTest {
     Session session = createSession();
     MockSpan parent = mockTracer.buildSpan("parent").start();
 
-    try (Scope ignore = mockTracer.scopeManager().activate(parent, true)) {
+    try (Scope ignore = mockTracer.scopeManager().activate(parent)) {
       MappingManager mappingManager = new MappingManager(session);
       mappingManager.mapper(Book.class).save(new Book(UUID.randomUUID(), "random book"));
       session.close();
+    } finally {
+      parent.finish();
     }
 
     waitForSpans(mockTracer, 2);

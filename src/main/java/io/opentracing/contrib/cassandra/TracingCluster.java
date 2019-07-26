@@ -106,12 +106,21 @@ public class TracingCluster extends Cluster {
    */
   @Override
   public ListenableFuture<Session> connectAsync(String keyspace) {
-    return GuavaCompatibility.INSTANCE
-        .transform(super.connectAsync(keyspace), new Function<Session, Session>() {
-          @Override
-          public Session apply(Session session) {
-            return new TracingSession(session, tracer, querySpanNameProvider, executorService);
-          }
-        });
+    if (GuavaCompatibilityUtil.isGuavaCompatibilityFound()) {
+      return GuavaCompatibility.INSTANCE
+          .transform(super.connectAsync(keyspace), new Function<Session, Session>() {
+            @Override
+            public Session apply(Session session) {
+              return new TracingSession(session, tracer, querySpanNameProvider, executorService);
+            }
+          });
+    } else {
+      return GuavaCompatibility.INSTANCE.transform(super.connectAsync(keyspace), new Function<Session, Session>() {
+        @Override
+        public Session apply(Session session) {
+          return new TracingSession(session, tracer, querySpanNameProvider, executorService);
+        }
+      });
+    }
   }
 }

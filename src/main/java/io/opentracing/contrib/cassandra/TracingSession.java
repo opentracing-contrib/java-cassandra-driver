@@ -25,6 +25,7 @@ import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.Statement;
 import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
@@ -54,18 +55,12 @@ public class TracingSession implements Session {
   private final QuerySpanNameProvider querySpanNameProvider;
 
   public TracingSession(Session session, Tracer tracer) {
-    this.session = session;
-    this.tracer = tracer;
-    this.querySpanNameProvider = CustomStringSpanName.newBuilder().build("execute");
-    this.executorService = Executors.newCachedThreadPool();
+    this(session, tracer, CustomStringSpanName.newBuilder().build("execute"));
   }
 
   public TracingSession(Session session, Tracer tracer,
       QuerySpanNameProvider querySpanNameProvider) {
-    this.session = session;
-    this.tracer = tracer;
-    this.querySpanNameProvider = querySpanNameProvider;
-    this.executorService = Executors.newCachedThreadPool();
+    this(session, tracer, querySpanNameProvider, Executors.newCachedThreadPool());
   }
 
   public TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider,
@@ -97,13 +92,22 @@ public class TracingSession implements Session {
    */
   @Override
   public ListenableFuture<Session> initAsync() {
-    return GuavaCompatibility.INSTANCE
-        .transform(session.initAsync(), new Function<Session, Session>() {
-          @Override
-          public Session apply(Session session) {
-            return new TracingSession(session, tracer);
-          }
-        });
+    if (GuavaCompatibilityUtil.isGuavaCompatibilityFound()) {
+      return GuavaCompatibility.INSTANCE
+          .transform(session.initAsync(), new Function<Session, Session>() {
+            @Override
+            public Session apply(Session session) {
+              return new TracingSession(session, tracer);
+            }
+          });
+    } else {
+      return Futures.transform(session.initAsync(), new Function<Session, Session>() {
+        @Override
+        public Session apply(Session session) {
+          return new TracingSession(session, tracer);
+        }
+      });
+    }
   }
 
   /**

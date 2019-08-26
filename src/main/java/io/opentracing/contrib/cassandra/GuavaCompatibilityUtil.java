@@ -13,6 +13,10 @@
  */
 package io.opentracing.contrib.cassandra;
 
+import com.datastax.driver.core.GuavaCompatibility;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.ListenableFuture;
+
 public class GuavaCompatibilityUtil {
   private static final GuavaCompatibilityUtil INSTANCE = new GuavaCompatibilityUtil();
   private final boolean isGuavaCompatibilityFound;
@@ -21,8 +25,9 @@ public class GuavaCompatibilityUtil {
     boolean check;
     try {
       Class.forName("com.datastax.driver.core.GuavaCompatibility");
+      GuavaCompatibility.class.getMethod("transform", ListenableFuture.class, Function.class);
       check = true;
-    } catch (ClassNotFoundException ignore) {
+    } catch (ClassNotFoundException | NoSuchMethodException ignore) {
       check = false;
     }
     this.isGuavaCompatibilityFound = check;

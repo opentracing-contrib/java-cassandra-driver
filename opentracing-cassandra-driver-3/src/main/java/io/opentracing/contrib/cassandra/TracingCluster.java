@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import io.opentracing.Tracer;
 import io.opentracing.contrib.cassandra.nameprovider.CustomStringSpanName;
 import io.opentracing.contrib.cassandra.nameprovider.QuerySpanNameProvider;
-import io.opentracing.util.GlobalTracer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -39,13 +38,6 @@ public class TracingCluster extends Cluster {
     this(initializer, tracer, CustomStringSpanName.newBuilder().build("execute"));
   }
 
-  /**
-   * GlobalTracer is used to get tracer
-   */
-  public TracingCluster(Initializer initializer) {
-    this(initializer, GlobalTracer.get());
-  }
-
   public TracingCluster(Initializer initializer, Tracer tracer,
       QuerySpanNameProvider querySpanNameProvider) {
     this(initializer, tracer, querySpanNameProvider, Executors.newCachedThreadPool());
@@ -58,13 +50,6 @@ public class TracingCluster extends Cluster {
     this.tracer = tracer;
     this.querySpanNameProvider = querySpanNameProvider;
     this.executorService = executorService;
-  }
-
-  /**
-   * GlobalTracer is used to get tracer
-   */
-  public TracingCluster(Initializer initializer, QuerySpanNameProvider querySpanNameProvider) {
-    this(initializer, GlobalTracer.get(), querySpanNameProvider);
   }
 
   /**

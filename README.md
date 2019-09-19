@@ -5,11 +5,20 @@ OpenTracing instrumentation for Cassandra Driver.
 
 ## Installation
 
-pom.xml
+### Cassandra 3
 ```xml
 <dependency>
     <groupId>io.opentracing.contrib</groupId>
-    <artifactId>opentracing-cassandra-driver</artifactId>
+    <artifactId>opentracing-cassandra-driver-3</artifactId>
+    <version>VERSION</version>
+</dependency>
+```
+
+### Cassandra 4
+```xml
+<dependency>
+    <groupId>io.opentracing.contrib</groupId>
+    <artifactId>opentracing-cassandra-driver-4</artifactId>
     <version>VERSION</version>
 </dependency>
 ```
@@ -19,19 +28,31 @@ pom.xml
 ```java
 // Instantiate tracer
 Tracer tracer = ...
+```
 
-// Optionally register tracer with GlobalTracer
-GlobalTracer.register(tracer);
-
-// Instantiate Cluster Builder
+### Cassandra 3
+```java
+// Instantiate Cluster Builder:
  Cluster.Builder builder = Cluster.builder().addContactPoints("127.0.0.1").withPort(9142);
 
-// Instantiate Tracing Cluster
+// Instantiate Tracing Cluster:
 Cluster cluster = new TracingCluster(builder, tracer);
+```
+
+### Cassandra 4
+```java
+// Instantiate CqlSession:
+CqlSession session = CqlSession.builder().build()
+
+// Decorate CqlSession with TracingCqlSession:
+CqlSession tracingSession = new TracingCqlSession(session, tracer);
+
+// execute query with TracingCqlSession:
+tracingSession.execute("...");
 
 ```
 
-## Span Names
+## Span Names for Cassandra 3
 By default, spans for executed queries will be created with the name `execute`.
 To use a different name for the query spans, you can create a custom name provider by implementing
 the QuerySpanNameProvider interface.

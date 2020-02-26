@@ -26,7 +26,7 @@
     <module>opentracing-cassandra-driver-4</module>
   </modules>
 
-  <name>${project.groupId}:${project.artifactId}</name>
+  <name>OpenTracing Instrumentation for Cassandra Driver</name>
   <description>OpenTracing Instrumentation for Cassandra Driver</description>
   <url>https://github.com/opentracing-contrib/java-cassandra-driver</url>
   <inceptionYear>2017-2019</inceptionYear>
@@ -69,7 +69,6 @@
     <opentracing.version>0.33.0</opentracing.version>
     <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.4</jacoco-maven-plugin.version>
-    <cassandra.version>3.7.2</cassandra.version>
   </properties>
 
   <dependencyManagement>

@@ -23,11 +23,11 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>opentracing-cassandra-driver-3</artifactId>
-  <name>${project.groupId}:${project.artifactId}</name>
+  <name>OpenTracing Instrumentation for Cassandra Driver 3</name>
   <description>OpenTracing Instrumentation for Cassandra Driver 3</description>
 
   <properties>
-    <cassandra.version>3.7.2</cassandra.version>
+    <cassandra.version>3.8.0</cassandra.version>
   </properties>
 
   <dependencies>

@@ -23,11 +23,11 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>opentracing-cassandra-driver-4</artifactId>
-  <name>${project.groupId}:${project.artifactId}</name>
+  <name>OpenTracing Instrumentation for Cassandra Driver 4</name>
   <description>OpenTracing Instrumentation for Cassandra Driver 4</description>
 
   <properties>
-    <cassandra.version>4.2.0</cassandra.version>
+    <cassandra.version>4.5.0</cassandra.version>
   </properties>
 
   <dependencies>
@@ -60,7 +60,7 @@
     <dependency>
       <groupId>org.cassandraunit</groupId>
       <artifactId>cassandra-unit</artifactId>
-      <version>3.11.2.0</version>
+      <version>4.3.1.0</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>

@@ -58,7 +58,8 @@ public class TracingCqlSession implements CqlSession {
       spanBuilder.withTag(Tags.DB_STATEMENT.getKey(), simpleStatement.getQuery());
     } else if (statement instanceof BoundStatement) {
       BoundStatement boundStatement = (BoundStatement) statement;
-      spanBuilder.withTag(Tags.DB_STATEMENT.getKey(), boundStatement.getPreparedStatement().getQuery());
+      spanBuilder
+          .withTag(Tags.DB_STATEMENT.getKey(), boundStatement.getPreparedStatement().getQuery());
     }
 
     final Span span = spanBuilder.start();
@@ -97,7 +98,8 @@ public class TracingCqlSession implements CqlSession {
       spanBuilder.withTag(Tags.DB_STATEMENT.getKey(), simpleStatement.getQuery());
     } else if (statement instanceof BoundStatement) {
       BoundStatement boundStatement = (BoundStatement) statement;
-      spanBuilder.withTag(Tags.DB_STATEMENT.getKey(), boundStatement.getPreparedStatement().getQuery());
+      spanBuilder
+          .withTag(Tags.DB_STATEMENT.getKey(), boundStatement.getPreparedStatement().getQuery());
     }
 
     final Span span = spanBuilder.start();

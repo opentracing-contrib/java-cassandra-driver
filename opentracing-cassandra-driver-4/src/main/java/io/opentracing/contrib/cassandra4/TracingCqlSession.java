@@ -17,6 +17,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
@@ -55,6 +56,9 @@ public class TracingCqlSession implements CqlSession {
     if (statement instanceof SimpleStatement) {
       SimpleStatement simpleStatement = (SimpleStatement) statement;
       spanBuilder.withTag(Tags.DB_STATEMENT.getKey(), simpleStatement.getQuery());
+    } else if (statement instanceof BoundStatement) {
+      BoundStatement boundStatement = (BoundStatement) statement;
+      spanBuilder.withTag(Tags.DB_STATEMENT.getKey(), boundStatement.getPreparedStatement().getQuery());
     }
 
     final Span span = spanBuilder.start();
@@ -91,6 +95,9 @@ public class TracingCqlSession implements CqlSession {
     if (statement instanceof SimpleStatement) {
       SimpleStatement simpleStatement = (SimpleStatement) statement;
       spanBuilder.withTag(Tags.DB_STATEMENT.getKey(), simpleStatement.getQuery());
+    } else if (statement instanceof BoundStatement) {
+      BoundStatement boundStatement = (BoundStatement) statement;
+      spanBuilder.withTag(Tags.DB_STATEMENT.getKey(), boundStatement.getPreparedStatement().getQuery());
     }
 
     final Span span = spanBuilder.start();

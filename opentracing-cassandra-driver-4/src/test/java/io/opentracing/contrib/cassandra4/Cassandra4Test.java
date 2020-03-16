@@ -15,6 +15,7 @@ package io.opentracing.contrib.cassandra4;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -162,6 +163,7 @@ public class Cassandra4Test {
       assertEquals(Tags.SPAN_KIND_CLIENT, mockSpan.tags().get(Tags.SPAN_KIND.getKey()));
       assertEquals(TracingCqlSession.COMPONENT_NAME, mockSpan.tags().get(Tags.COMPONENT.getKey()));
       assertEquals("cassandra", mockSpan.tags().get(Tags.DB_TYPE.getKey()));
+      assertNotNull(mockSpan.tags().get(Tags.DB_STATEMENT.getKey()));
       assertEquals(0, mockSpan.generatedErrors().size());
       String operationName = mockSpan.operationName();
       assertEquals("execute", operationName);

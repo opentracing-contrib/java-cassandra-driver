@@ -16,6 +16,7 @@ package io.opentracing.contrib.cassandra;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.CloseFuture;
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.GuavaCompatibility;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.PreparedStatement;
@@ -31,11 +32,15 @@ import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.contrib.cassandra.nameprovider.CustomStringSpanName;
 import io.opentracing.contrib.cassandra.nameprovider.QuerySpanNameProvider;
+import io.opentracing.tag.BooleanTag;
+import io.opentracing.tag.IntTag;
+import io.opentracing.tag.StringTag;
 import io.opentracing.tag.Tags;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,6 +54,11 @@ import java.util.concurrent.Executors;
 public class TracingSession implements Session {
 
   static final String COMPONENT_NAME = "java-cassandra";
+  static final StringTag QUERY_CONSISTENCY_LEVEL = new StringTag("query.cl");
+  static final StringTag QUERY_TABLE = new StringTag("query.table");
+  static final IntTag QUERY_FETCH_SIZE = new IntTag("query.fetchSize");
+  static final BooleanTag QUERY_IDEMPOTENCE = new BooleanTag("query.idempotence");
+
   private final ExecutorService executorService;
   private final Session session;
   private final Tracer tracer;
@@ -172,10 +182,10 @@ public class TracingSession implements Session {
     ResultSet resultSet = null;
     try {
       resultSet = session.execute(statement);
-      finishSpan(span, resultSet);
+      finishSpan(span, resultSet, statement, session);
       return resultSet;
     } catch (Exception e) {
-      finishSpan(span, e);
+      finishSpan(span, e, statement, session);
       throw e;
     }
   }
@@ -224,7 +234,7 @@ public class TracingSession implements Session {
     String query = getQuery(statement);
     final Span span = buildSpan(query);
     ResultSetFuture future = session.executeAsync(statement);
-    future.addListener(createListener(span, future), executorService);
+    future.addListener(createListener(span, future, statement, session), executorService);
 
     return future;
   }
@@ -309,7 +319,7 @@ public class TracingSession implements Session {
     return query == null ? "" : query;
   }
 
-  private static Runnable createListener(final Span span, final ResultSetFuture future) {
+  private Runnable createListener(final Span span, final ResultSetFuture future) {
     return new Runnable() {
       @Override
       public void run() {
@@ -322,7 +332,31 @@ public class TracingSession implements Session {
     };
   }
 
-  private Span buildSpan(String query) {
+  private Runnable createListener(final Span span,
+                                  final ResultSetFuture future,
+                                  final Statement statement,
+                                  final Session session) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        try {
+          finishSpan(span, future.get(), statement, session);
+        } catch (InterruptedException | ExecutionException e) {
+          finishSpan(span, e, statement, session);
+        }
+      }
+    };
+  }
+
+
+  /**
+   * Build span for distributed tracing.
+   * Method can be overridden by subclasses to add custom tags.
+   *
+   * @param query cql query statement
+   * @return OpenTracing Span
+   */
+  public Span buildSpan(String query) {
     String querySpanName = querySpanNameProvider.querySpanName(query);
     Tracer.SpanBuilder spanBuilder = tracer.buildSpan(querySpanName)
         .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
@@ -341,7 +375,16 @@ public class TracingSession implements Session {
     return span;
   }
 
-  private static void finishSpan(Span span, ResultSet resultSet) {
+  /**
+   * Add OpenTracing tags after executing the query.
+   * Method can be overridden by subclasses to add custom tags.
+   *
+   * @param span OpenTracing Span
+   * @param resultSet ResultSet returns from executing the query
+   */
+  public void finishSpan(Span span, ResultSet resultSet) {
+    addDefaultTags(span, session);
+
     if (resultSet != null) {
       Host host = resultSet.getExecutionInfo().getQueriedHost();
       Tags.PEER_PORT.set(span, host.getSocketAddress().getPort());
@@ -355,18 +398,83 @@ public class TracingSession implements Session {
       } else {
         Tags.PEER_HOST_IPV6.set(span, inetAddress.getHostAddress());
       }
-
     }
     span.finish();
   }
 
-  private static void finishSpan(Span span, Exception e) {
+  /**
+   * Add OpenTracing tags after executing the query.
+   * Method can be overridden by subclasses to add custom tags.
+   *
+   * @param span OpenTracing Span
+   * @param resultSet ResultSet returns from executing the query
+   * @param statement Query statement
+   * @param session Cassandra session
+   */
+  public void finishSpan(Span span, ResultSet resultSet, Statement statement, Session session) {
+    addDefaultStatementTags(span, statement, session);
+
+    if (resultSet != null) {
+      Host host = resultSet.getExecutionInfo().getQueriedHost();
+      InetSocketAddress hostSocket = host.getEndPoint().resolve();
+      Tags.PEER_PORT.set(span, hostSocket.getPort());
+      Tags.PEER_HOSTNAME.set(span, hostSocket.getHostName());
+      InetAddress inetAddress = hostSocket.getAddress();
+      if (inetAddress instanceof Inet4Address) {
+        Tags.PEER_HOST_IPV4.set(span, inetAddress.getHostAddress());
+      } else {
+        Tags.PEER_HOST_IPV6.set(span, inetAddress.getHostAddress());
+      }
+    }
+    span.finish();
+  }
+
+  /**
+   * Add OpenTracing tags after executing the query.
+   * Method can be overridden by subclasses to add custom tags.
+   *
+   * @param span OpenTracing Span
+   * @param e Exception thrown while executing the query
+   * @param statement Query statement
+   * @param session Cassandra session
+   */
+  public void finishSpan(Span span, Exception e, Statement statement, Session session) {
     Tags.ERROR.set(span, Boolean.TRUE);
+
+    addDefaultStatementTags(span, statement, session);
+
+    if (statement instanceof BoundStatement) {
+      span.log(errorLogs(e, statement));
+    } else {
+      span.log(errorLogs(e));
+    }
+    span.finish();
+  }
+
+  /**
+   * Add OpenTracing tags after executing the query.
+   * Method can be overridden by subclasses to add custom tags.
+   *
+   * @param span OpenTracing Span
+   * @param e Exception thrown while executing the query
+   */
+  public void finishSpan(Span span, Exception e) {
+    Tags.ERROR.set(span, Boolean.TRUE);
+
+    addDefaultTags(span, session);
+
     span.log(errorLogs(e));
     span.finish();
   }
 
-  private static Map<String, Object> errorLogs(Throwable throwable) {
+  /**
+   * Add error logs.
+   * Method can be overridden by subclasses to add custom error logs.
+   *
+   * @param throwable Exception thrown while executing the query
+   * @return Error Logs
+   */
+  public Map<String, Object> errorLogs(Throwable throwable) {
     Map<String, Object> errorLogs = new HashMap<>(4);
     errorLogs.put("event", Tags.ERROR.getKey());
     errorLogs.put("error.kind", throwable.getClass().getName());
@@ -379,5 +487,56 @@ public class TracingSession implements Session {
     errorLogs.put("stack", sw.toString());
 
     return errorLogs;
+  }
+
+  /**
+   * Add error logs.
+   * Method can be overridden by subclasses to add custom error logs.
+   *
+   * @param throwable Exception thrown while excuting the query
+   * @param statement Query statement
+   * @return Error Logs
+   */
+  public Map<String, Object> errorLogs(Throwable throwable, Statement statement) {
+    Map<String, Object> errorLogs = errorLogs(throwable);
+    String statementStr = statement.toString();
+    errorLogs.put("query.statement", statementStr);
+    return errorLogs;
+  }
+
+  private void addDefaultStatementTags(Span span, Statement statement, Session session) {
+    ConsistencyLevel cl = statement.getConsistencyLevel();
+    if (cl == null && session.getCluster().getConfiguration().getQueryOptions().isConsistencySet()) {
+      cl = session.getCluster().getConfiguration().getQueryOptions().getConsistencyLevel();
+    }
+    if (cl != null) {
+      QUERY_CONSISTENCY_LEVEL.set(span, cl.name());
+    }
+
+    int fetchSize = statement.getFetchSize();
+    if (fetchSize == 0) {
+      fetchSize = session.getCluster().getConfiguration().getQueryOptions().getFetchSize();
+    }
+    QUERY_FETCH_SIZE.set(span, fetchSize);
+
+    boolean isIdempotent = session.getCluster().getConfiguration().getQueryOptions().getDefaultIdempotence();
+    if (statement.isIdempotent() != null) {
+      isIdempotent = statement.isIdempotent();
+    }
+    QUERY_IDEMPOTENCE.set(span, isIdempotent);
+  }
+
+  private void addDefaultTags(Span span, Session session) {
+    ConsistencyLevel cl = session.getCluster().getConfiguration().getQueryOptions().getConsistencyLevel();
+    if (cl != null) {
+      QUERY_CONSISTENCY_LEVEL.set(span, cl.name());
+    }
+
+    int fetchSize = session.getCluster().getConfiguration().getQueryOptions().getFetchSize();
+
+    QUERY_FETCH_SIZE.set(span, fetchSize);
+
+    boolean isIdempotent = session.getCluster().getConfiguration().getQueryOptions().getDefaultIdempotence();
+    QUERY_IDEMPOTENCE.set(span, isIdempotent);
   }
 }

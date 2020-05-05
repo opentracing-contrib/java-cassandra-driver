@@ -182,10 +182,10 @@ public class TracingSession implements Session {
     ResultSet resultSet = null;
     try {
       resultSet = session.execute(statement);
-      finishSpan(span, resultSet, statement, session);
+      finishSpan(span, resultSet, statement);
       return resultSet;
     } catch (Exception e) {
-      finishSpan(span, e, statement, session);
+      finishSpan(span, e, statement);
       throw e;
     }
   }
@@ -234,7 +234,7 @@ public class TracingSession implements Session {
     String query = getQuery(statement);
     final Span span = buildSpan(query);
     ResultSetFuture future = session.executeAsync(statement);
-    future.addListener(createListener(span, future, statement, session), executorService);
+    future.addListener(createListener(span, future, statement), executorService);
 
     return future;
   }
@@ -334,15 +334,14 @@ public class TracingSession implements Session {
 
   private Runnable createListener(final Span span,
                                   final ResultSetFuture future,
-                                  final Statement statement,
-                                  final Session session) {
+                                  final Statement statement) {
     return new Runnable() {
       @Override
       public void run() {
         try {
-          finishSpan(span, future.get(), statement, session);
+          finishSpan(span, future.get(), statement);
         } catch (InterruptedException | ExecutionException e) {
-          finishSpan(span, e, statement, session);
+          finishSpan(span, e, statement);
         }
       }
     };
@@ -383,7 +382,7 @@ public class TracingSession implements Session {
    * @param resultSet ResultSet returns from executing the query
    */
   public void finishSpan(Span span, ResultSet resultSet) {
-    addDefaultTags(span, session);
+    addDefaultTags(span);
 
     if (resultSet != null) {
       Host host = resultSet.getExecutionInfo().getQueriedHost();
@@ -409,10 +408,9 @@ public class TracingSession implements Session {
    * @param span OpenTracing Span
    * @param resultSet ResultSet returns from executing the query
    * @param statement Query statement
-   * @param session Cassandra session
    */
-  public void finishSpan(Span span, ResultSet resultSet, Statement statement, Session session) {
-    addDefaultStatementTags(span, statement, session);
+  public void finishSpan(Span span, ResultSet resultSet, Statement statement) {
+    addDefaultStatementTags(span, statement);
 
     if (resultSet != null) {
       Host host = resultSet.getExecutionInfo().getQueriedHost();
@@ -436,12 +434,11 @@ public class TracingSession implements Session {
    * @param span OpenTracing Span
    * @param e Exception thrown while executing the query
    * @param statement Query statement
-   * @param session Cassandra session
    */
-  public void finishSpan(Span span, Exception e, Statement statement, Session session) {
+  public void finishSpan(Span span, Exception e, Statement statement) {
     Tags.ERROR.set(span, Boolean.TRUE);
 
-    addDefaultStatementTags(span, statement, session);
+    addDefaultStatementTags(span, statement);
 
     if (statement instanceof BoundStatement) {
       span.log(errorLogs(e, statement));
@@ -461,7 +458,7 @@ public class TracingSession implements Session {
   public void finishSpan(Span span, Exception e) {
     Tags.ERROR.set(span, Boolean.TRUE);
 
-    addDefaultTags(span, session);
+    addDefaultTags(span);
 
     span.log(errorLogs(e));
     span.finish();
@@ -504,7 +501,7 @@ public class TracingSession implements Session {
     return errorLogs;
   }
 
-  private void addDefaultStatementTags(Span span, Statement statement, Session session) {
+  private void addDefaultStatementTags(Span span, Statement statement) {
     ConsistencyLevel cl = statement.getConsistencyLevel();
     if (cl == null && session.getCluster().getConfiguration().getQueryOptions().isConsistencySet()) {
       cl = session.getCluster().getConfiguration().getQueryOptions().getConsistencyLevel();
@@ -526,7 +523,7 @@ public class TracingSession implements Session {
     QUERY_IDEMPOTENCE.set(span, isIdempotent);
   }
 
-  private void addDefaultTags(Span span, Session session) {
+  private void addDefaultTags(Span span) {
     ConsistencyLevel cl = session.getCluster().getConfiguration().getQueryOptions().getConsistencyLevel();
     if (cl != null) {
       QUERY_CONSISTENCY_LEVEL.set(span, cl.name());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 The OpenTracing Authors
+ * Copyright 2017-2020 The OpenTracing Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -333,8 +333,8 @@ public class TracingSession implements Session {
   }
 
   private Runnable createListener(final Span span,
-                                  final ResultSetFuture future,
-                                  final Statement statement) {
+      final ResultSetFuture future,
+      final Statement statement) {
     return new Runnable() {
       @Override
       public void run() {
@@ -349,8 +349,7 @@ public class TracingSession implements Session {
 
 
   /**
-   * Build span for distributed tracing.
-   * Method can be overridden by subclasses to add custom tags.
+   * Build span for distributed tracing. Method can be overridden by subclasses to add custom tags.
    *
    * @param query cql query statement
    * @return OpenTracing Span
@@ -375,8 +374,8 @@ public class TracingSession implements Session {
   }
 
   /**
-   * Add OpenTracing tags after executing the query.
-   * Method can be overridden by subclasses to add custom tags.
+   * Add OpenTracing tags after executing the query. Method can be overridden by subclasses to add
+   * custom tags.
    *
    * @param span OpenTracing Span
    * @param resultSet ResultSet returns from executing the query
@@ -402,8 +401,8 @@ public class TracingSession implements Session {
   }
 
   /**
-   * Add OpenTracing tags after executing the query.
-   * Method can be overridden by subclasses to add custom tags.
+   * Add OpenTracing tags after executing the query. Method can be overridden by subclasses to add
+   * custom tags.
    *
    * @param span OpenTracing Span
    * @param resultSet ResultSet returns from executing the query
@@ -428,8 +427,8 @@ public class TracingSession implements Session {
   }
 
   /**
-   * Add OpenTracing tags after executing the query.
-   * Method can be overridden by subclasses to add custom tags.
+   * Add OpenTracing tags after executing the query. Method can be overridden by subclasses to add
+   * custom tags.
    *
    * @param span OpenTracing Span
    * @param e Exception thrown while executing the query
@@ -449,8 +448,8 @@ public class TracingSession implements Session {
   }
 
   /**
-   * Add OpenTracing tags after executing the query.
-   * Method can be overridden by subclasses to add custom tags.
+   * Add OpenTracing tags after executing the query. Method can be overridden by subclasses to add
+   * custom tags.
    *
    * @param span OpenTracing Span
    * @param e Exception thrown while executing the query
@@ -465,8 +464,7 @@ public class TracingSession implements Session {
   }
 
   /**
-   * Add error logs.
-   * Method can be overridden by subclasses to add custom error logs.
+   * Add error logs. Method can be overridden by subclasses to add custom error logs.
    *
    * @param throwable Exception thrown while executing the query
    * @return Error Logs
@@ -487,8 +485,7 @@ public class TracingSession implements Session {
   }
 
   /**
-   * Add error logs.
-   * Method can be overridden by subclasses to add custom error logs.
+   * Add error logs. Method can be overridden by subclasses to add custom error logs.
    *
    * @param throwable Exception thrown while excuting the query
    * @param statement Query statement
@@ -503,7 +500,8 @@ public class TracingSession implements Session {
 
   private void addDefaultStatementTags(Span span, Statement statement) {
     ConsistencyLevel cl = statement.getConsistencyLevel();
-    if (cl == null && session.getCluster().getConfiguration().getQueryOptions().isConsistencySet()) {
+    if (cl == null && session.getCluster().getConfiguration().getQueryOptions()
+        .isConsistencySet()) {
       cl = session.getCluster().getConfiguration().getQueryOptions().getConsistencyLevel();
     }
     if (cl != null) {
@@ -516,7 +514,8 @@ public class TracingSession implements Session {
     }
     QUERY_FETCH_SIZE.set(span, fetchSize);
 
-    boolean isIdempotent = session.getCluster().getConfiguration().getQueryOptions().getDefaultIdempotence();
+    boolean isIdempotent = session.getCluster().getConfiguration().getQueryOptions()
+        .getDefaultIdempotence();
     if (statement.isIdempotent() != null) {
       isIdempotent = statement.isIdempotent();
     }
@@ -524,7 +523,8 @@ public class TracingSession implements Session {
   }
 
   private void addDefaultTags(Span span) {
-    ConsistencyLevel cl = session.getCluster().getConfiguration().getQueryOptions().getConsistencyLevel();
+    ConsistencyLevel cl = session.getCluster().getConfiguration().getQueryOptions()
+        .getConsistencyLevel();
     if (cl != null) {
       QUERY_CONSISTENCY_LEVEL.set(span, cl.name());
     }
@@ -533,7 +533,8 @@ public class TracingSession implements Session {
 
     QUERY_FETCH_SIZE.set(span, fetchSize);
 
-    boolean isIdempotent = session.getCluster().getConfiguration().getQueryOptions().getDefaultIdempotence();
+    boolean isIdempotent = session.getCluster().getConfiguration().getQueryOptions()
+        .getDefaultIdempotence();
     QUERY_IDEMPOTENCE.set(span, isIdempotent);
   }
 }

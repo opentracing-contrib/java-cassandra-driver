@@ -19,7 +19,7 @@
   <groupId>io.opentracing.contrib</groupId>
   <artifactId>opentracing-cassandra-driver-parent</artifactId>
   <packaging>pom</packaging>
-  <version>0.1.9</version>
+  <version>0.1.10-SNAPSHOT</version>
 
   <modules>
     <module>opentracing-cassandra-driver-3</module>
@@ -37,7 +37,7 @@
     </connection>
     <developerConnection>scm:git:https://github.com/opentracing-contrib/java-cassandra-driver.git
     </developerConnection>
-    <tag>0.1.9</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <licenses>

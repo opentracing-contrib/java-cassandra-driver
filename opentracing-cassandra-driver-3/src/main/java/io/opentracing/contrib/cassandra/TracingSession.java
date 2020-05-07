@@ -391,8 +391,7 @@ public class TracingSession implements Session {
       InetAddress inetAddress = host.getSocketAddress().getAddress();
 
       if (inetAddress instanceof Inet4Address) {
-        byte[] address = inetAddress.getAddress();
-        Tags.PEER_HOST_IPV4.set(span, ByteBuffer.wrap(address).getInt());
+        Tags.PEER_HOST_IPV4.set(span, inetAddress.getHostAddress());
       } else {
         Tags.PEER_HOST_IPV6.set(span, inetAddress.getHostAddress());
       }

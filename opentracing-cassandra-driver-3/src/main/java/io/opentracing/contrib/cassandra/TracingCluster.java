@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import io.opentracing.Tracer;
 import io.opentracing.contrib.cassandra.nameprovider.CustomStringSpanName;
 import io.opentracing.contrib.cassandra.nameprovider.QuerySpanNameProvider;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
@@ -32,7 +32,7 @@ public class TracingCluster extends Cluster {
 
   private final Tracer tracer;
   private final QuerySpanNameProvider querySpanNameProvider;
-  private final ExecutorService executorService;
+  private final Executor executor;
 
   public TracingCluster(Initializer initializer, Tracer tracer) {
     this(initializer, tracer, CustomStringSpanName.newBuilder().build("execute"));
@@ -45,11 +45,11 @@ public class TracingCluster extends Cluster {
 
   public TracingCluster(Initializer initializer, Tracer tracer,
       QuerySpanNameProvider querySpanNameProvider,
-      ExecutorService executorService) {
+      Executor executor) {
     super(initializer);
     this.tracer = tracer;
     this.querySpanNameProvider = querySpanNameProvider;
-    this.executorService = executorService;
+    this.executor = executor;
   }
 
   /**
@@ -57,7 +57,7 @@ public class TracingCluster extends Cluster {
    */
   @Override
   public Session newSession() {
-    return new TracingSession(super.newSession(), tracer, querySpanNameProvider, executorService);
+    return new TracingSession(super.newSession(), tracer, querySpanNameProvider, executor);
   }
 
   /**
@@ -97,7 +97,7 @@ public class TracingCluster extends Cluster {
           .transform(super.connectAsync(keyspace), new Function<Session, Session>() {
             @Override
             public Session apply(Session session) {
-              return new TracingSession(session, tracer, querySpanNameProvider, executorService);
+              return new TracingSession(session, tracer, querySpanNameProvider, executor);
             }
           });
     } else {
@@ -105,7 +105,7 @@ public class TracingCluster extends Cluster {
           .transform(super.connectAsync(keyspace), new Function<Session, Session>() {
             @Override
             public Session apply(Session session) {
-              return new TracingSession(session, tracer, querySpanNameProvider, executorService);
+              return new TracingSession(session, tracer, querySpanNameProvider, executor);
             }
           });
     }

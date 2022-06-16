@@ -45,7 +45,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
@@ -59,7 +59,7 @@ public class TracingSession implements Session {
   static final IntTag QUERY_FETCH_SIZE = new IntTag("query.fetchSize");
   static final BooleanTag QUERY_IDEMPOTENCE = new BooleanTag("query.idempotence");
 
-  private final ExecutorService executorService;
+  private final Executor executor;
   private final Session session;
   private final Tracer tracer;
   private final QuerySpanNameProvider querySpanNameProvider;
@@ -74,11 +74,11 @@ public class TracingSession implements Session {
   }
 
   public TracingSession(Session session, Tracer tracer, QuerySpanNameProvider querySpanNameProvider,
-      ExecutorService executorService) {
+      Executor executor) {
     this.session = session;
     this.tracer = tracer;
     this.querySpanNameProvider = querySpanNameProvider;
-    this.executorService = executorService;
+    this.executor = executor;
   }
 
   /**
@@ -94,7 +94,7 @@ public class TracingSession implements Session {
    */
   @Override
   public Session init() {
-    return new TracingSession(session.init(), tracer, querySpanNameProvider, executorService);
+    return new TracingSession(session.init(), tracer, querySpanNameProvider, executor);
   }
 
   /**
@@ -197,7 +197,7 @@ public class TracingSession implements Session {
   public ResultSetFuture executeAsync(String query) {
     final Span span = buildSpan(query);
     ResultSetFuture future = session.executeAsync(query);
-    future.addListener(createListener(span, future), executorService);
+    future.addListener(createListener(span, future), executor);
 
     return future;
   }
@@ -209,7 +209,7 @@ public class TracingSession implements Session {
   public ResultSetFuture executeAsync(String query, Object... values) {
     final Span span = buildSpan(query);
     ResultSetFuture future = session.executeAsync(query, values);
-    future.addListener(createListener(span, future), executorService);
+    future.addListener(createListener(span, future), executor);
 
     return future;
   }
@@ -221,7 +221,7 @@ public class TracingSession implements Session {
   public ResultSetFuture executeAsync(String query, Map<String, Object> values) {
     final Span span = buildSpan(query);
     ResultSetFuture future = session.executeAsync(query, values);
-    future.addListener(createListener(span, future), executorService);
+    future.addListener(createListener(span, future), executor);
 
     return future;
   }
@@ -234,7 +234,7 @@ public class TracingSession implements Session {
     String query = getQuery(statement);
     final Span span = buildSpan(query);
     ResultSetFuture future = session.executeAsync(statement);
-    future.addListener(createListener(span, future, statement), executorService);
+    future.addListener(createListener(span, future, statement), executor);
 
     return future;
   }
